@@ -1,0 +1,93 @@
+import pandas as pd
+import numpy as np
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.neural_network import MLPClassifier
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+
+# ----------------- Step 1: Load Dataset -----------------
+# Ensure 'Churn_Modelling.csv' is present in the working directory
+try:
+    df = pd.read_csv("Churn_Modelling.csv")
+except FileNotFoundError:
+    print("Warning: 'Churn_Modelling.csv' not found. Creating synthetic demo data...")
+    df = pd.DataFrame({
+        "RowNumber": range(1, 201),
+        "CustomerId": range(1001, 1201),
+        "Surname": ["Customer"] * 200,
+        "CreditScore": np.random.randint(500, 850, 200),
+        "Geography": np.random.choice(["France", "Germany", "Spain"], 200),
+        "Gender": np.random.choice(["Male", "Female"], 200),
+        "Age": np.random.randint(18, 70, 200),
+        "Tenure": np.random.randint(0, 10, 200),
+        "Balance": np.random.uniform(0, 150000, 200),
+        "NumOfProducts": np.random.randint(1, 4, 200),
+        "HasCrCard": np.random.choice([0, 1], 200),
+        "IsActiveMember": np.random.choice([0, 1], 200),
+        "EstimatedSalary": np.random.uniform(20000, 120000, 200),
+        "Exited": np.random.choice([0, 1], 200, p=[0.75, 0.25])
+    })
+
+# ----------------- Step 2: Feature Engineering & Preprocessing -----------------
+# Remove identifier columns that carry no predictive statistical signal
+df = df.drop(columns=["RowNumber", "CustomerId", "Surname"])
+
+# Categorical Feature Encoding:
+# Convert categorical text data into numeric representations using LabelEncoder
+le = LabelEncoder()
+
+# Encodes 'Female' -> 0, 'Male' -> 1
+df["Gender"] = le.fit_transform(df["Gender"])
+
+# Encodes 'France' -> 0, 'Germany' -> 1, 'Spain' -> 2
+df["Geography"] = le.fit_transform(df["Geography"])
+
+# ----------------- Step 3: Feature & Target Split -----------------
+# Feature Matrix X (all columns except the target label)
+X = df.drop("Exited", axis=1)
+
+# Target Vector y (Binary: 0 = Retained, 1 = Exited/Churned)
+y = df["Exited"]
+
+# Split into 80% Training set and 20% Testing set
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+# ----------------- Step 4: Feature Standardization -----------------
+# Neural Networks are extremely sensitive to feature magnitude differences.
+# Large values (like Balance: 100,000) will explode weights compared to small values (Tenure: 2).
+# CRITICAL VIVA NOTE: fit_transform ONLY on training set; transform on test set
+# to prevent Data Leakage!
+sc = StandardScaler()
+X_train = sc.fit_transform(X_train)
+X_test = sc.transform(X_test)
+
+# ----------------- Step 5: Artificial Neural Network Architecture -----------------
+# MLPClassifier configures a Feedforward Fully Connected Neural Network:
+# - hidden_layer_sizes=(10, 5): 2 hidden layers (Layer 1: 10 neurons, Layer 2: 5 neurons)
+# - activation='relu': Rectified Linear Unit f(z) = max(0, z) for non-linear mappings
+# - solver='adam': Adaptive Moment Estimation optimizer
+# - max_iter=500: Maximum training iterations (epochs)
+model = MLPClassifier(
+    hidden_layer_sizes=(10, 5),
+    activation="relu",
+    solver="adam",
+    max_iter=500,
+    random_state=42
+)
+
+# Train the network via Forward Propagation and Backpropagation
+model.fit(X_train, y_train)
+
+# ----------------- Step 6: Prediction & Evaluation -----------------
+pred = model.predict(X_test)
+
+print("=================== Model Results ===================")
+print("Classification Accuracy:", round(accuracy_score(y_test, pred), 4))
+print("\nConfusion Matrix:")
+print(confusion_matrix(y_test, pred))
+print("\nClassification Report:")
+print(classification_report(y_test, pred))
+print("=====================================================")

@@ -1,0 +1,42 @@
+import java.util.Scanner;
+
+public class fibonacci {
+
+    // Recursive Fibonacci
+    static int fibRecursive(int n) {
+        if (n <= 1) {
+            return n;
+        }
+        return fibRecursive(n - 1) + fibRecursive(n - 2);
+    }
+
+    // Non-recursive Fibonacci
+    static int fibIterative(int n) {
+        int a = 0, b = 1;
+
+        for (int i = 0; i < n; i++) {
+            int temp = a + b;
+            a = b;
+            b = temp;
+        }
+
+        return a;
+    }
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter the position: ");
+        int n = sc.nextInt();
+
+        if (n < 0) {
+            System.out.println("Enter a non-negative number");
+        } else {
+            System.out.println("Recursive Fibonacci: " + fibRecursive(n));
+            System.out.println("Iterative Fibonacci: " + fibIterative(n));
+        }
+
+        sc.close();
+    }
+}
+

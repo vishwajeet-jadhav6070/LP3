@@ -1,0 +1,120 @@
+import java.util.*;
+
+class Node {
+    char symbol;
+    int freq;
+    Node left, right;
+
+    Node(char symbol, int freq) {
+        this.symbol = symbol;
+        this.freq = freq;
+    }
+
+    Node(int freq, Node left, Node right) {
+        this.symbol = '\0';
+        this.freq = freq;
+        this.left = left;
+        this.right = right;
+    }
+}
+
+public class Huffman {
+
+    static Map<Character, String> codes = new HashMap<>();
+
+    // Generate Huffman Codes
+    static void generate(Node root, String code) {
+        if (root.left == null && root.right == null) {
+            codes.put(root.symbol, code.isEmpty() ? "0" : code);
+            return;
+        }
+
+        generate(root.left, code + "0");
+        generate(root.right, code + "1");
+    }
+
+    public static void main(String[] args) {
+
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter number of symbols: ");
+        int n = sc.nextInt();
+
+        if (n <= 0) {
+            System.out.println("Invalid input");
+            sc.close();
+            return;
+        }
+
+        char[] symbols = new char[n];
+        int[] freq = new int[n];
+
+        PriorityQueue<Node> pq = new PriorityQueue<>(
+            Comparator.comparingInt(node -> node.freq)
+        );
+
+        System.out.println("Enter symbols and frequencies:");
+
+        Set<Character> unique = new HashSet<>();
+
+        for (int i = 0; i < n; i++) {
+            symbols[i] = sc.next().charAt(0);
+            freq[i] = sc.nextInt();
+
+            if (freq[i] <= 0 || !unique.add(symbols[i])) {
+                System.out.println("Invalid input");
+                sc.close();
+                return;
+            }
+
+            pq.add(new Node(symbols[i], freq[i]));
+        }
+
+        // Build Huffman Tree
+        while (pq.size() > 1) {
+
+            Node left = pq.poll();
+            Node right = pq.poll();
+
+            Node parent = new Node(
+                left.freq + right.freq, left, right
+            );
+
+            pq.add(parent);
+        }
+
+        Node root = pq.poll();
+
+        generate(root, "");
+
+        System.out.println("\nHuffman Codes:");
+
+        for (char ch : symbols) {
+            System.out.println(ch + " : " + codes.get(ch));
+        }
+
+        // Encode Message
+        System.out.print("\nEnter message to encode: ");
+        String message = sc.next();
+
+        String encoded = "";
+
+        boolean valid = true;
+
+        for (char ch : message.toCharArray()) {
+            if (!codes.containsKey(ch)) {
+                valid = false;
+                break;
+            }
+            encoded += codes.get(ch);
+        }
+
+        if (valid) {
+            System.out.println("Encoded message: " + encoded);
+        } else {
+            System.out.println("Message contains an unknown symbol");
+        }
+
+        sc.close();
+    }
+}
